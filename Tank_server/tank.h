@@ -2,7 +2,9 @@
 #define _TANK_H_
 
 #include <cmath>
+#include "coordinate.h"
 #include "item.h"
+#include"input.h"
 
 
 
@@ -29,7 +31,10 @@ public:
 	每一帧调用
 	更新坦克各种状态
 	*/
-	void update(float );
+	//void update(float);
+
+	void update(int, float, raw_input[]);
+	void update(float);
 
 	/*
 	设置坦克移动状态
@@ -106,6 +111,7 @@ private:
 	rotation m_cannon_rotation=0;//炮台相对旋转角
 
 	float m_now_speed=0;//坦克现在速度
+
 	int m_up_and_down=0;//坦克移动状态，向前加速为1,向后加速为-1,无动力为0
 	int m_left_and_right=0;//坦克旋转状态，逆时针（right）为1，顺时针（left）为-1，无旋转为0
 
@@ -121,4 +127,5 @@ private:
 后期考虑实现
 记录击杀数，最后统计对敌人伤害
 */
+
 #endif // !_TANK_H_

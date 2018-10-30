@@ -1,6 +1,6 @@
 #include "render.h"
 
-//#define SHOW_CONSOLE
+
 #include <graphics.h>
 
 
@@ -24,18 +24,7 @@ const char* imgurls[] = {
 	"./resources/wood.png",
 	"./resources/stone.png",
 	"./resources/wall.png",
-	"./resources/main_game.png",
-	"./resources/start.png",
-	"./resources/wait.png",
-	"./resources/choice.png",
-	".resources/confirm.png",
-	"./resources/sure.png",
-	"./resources/tank_1.png",
-	"./resources/tank_2.png",
-	"./resources/tank_3.png",
-	"./resources/cover.png",
-	"./resources/victory.png",
-	"./resources/defeat.png"
+	"./resources/start.jpg"
 };
 
 //Õº∆¨÷∏’Î
@@ -43,7 +32,6 @@ PIMAGE pimgs[sizeof(imgurls)/sizeof(char*)];
 
 render::render()
 {
-
 }
 
 /*

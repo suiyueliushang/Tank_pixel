@@ -1,10 +1,11 @@
 #ifndef _SCENE_H_
 #define _SCENE_H_
 
-#include "bullet.h"
-#include "tank.h"
 #include "timer.h"
-#include"my_socket.h"
+#include"input.h"
+#include"bullet.h"
+
+
 //每队最大坦克数量
 const int max_team_tank_count = 5;
 
@@ -14,21 +15,54 @@ const int max_item_count = 50;
 //场景最大子弹数量
 const int max_bullet_count = 40;
 
+
+
 //阵营颜色
 enum team_colors {
 	blue,
 	red
 };
 
+class choice_single
+{
+public:
+	choice_single();
+	int choice;
+	bool confirm;
+	bool ready;
+};
+
+class choice_blue
+{
+public:
+	choice_blue();
+	
+	bool blue_confirm[5];
+	int blue_choice[5];
+	bool ready;
+};
+
+class choice_red
+{
+public:
+	choice_red();
+	bool red_confirm[5];
+	int red_choice[5];
+	bool ready;
+};
+
 //动态场景类，用于数据传输
 //不能有动态分配内存，或各种类函数static变量
-class _dynamicScene {
-public:
 
+class _dynamicScene
+{
+public:
 	tank tanks[2][max_team_tank_count];//两队坦克
 	bullet bullets[max_bullet_count];//子弹
-	int end;//是否结束游戏,-1代表输，1代表赢；
+	int end;//1:蓝方胜利 0:未分胜负 -1:红方胜利
 };
+
+
 
 class gameScene
 {
@@ -36,8 +70,7 @@ public:
 	gameScene();
 	~gameScene();
 
-	//void sendInfo(Client&);
-	//bool recvInfo(Client&);
+	void Info();
 
 	/*
 	更新场景信息
@@ -67,8 +100,25 @@ public:
 	*/
 	void visionhandler();
 
-	_dynamicScene dynamic_scene;
 private:
+	bool end;
+
+	bool sure_one;
+
+	bool sure[10];
+
+	bool sureAll;
+
+	choice_blue m_choice_blue;
+
+	choice_red m_choice_red;
+
+	raw_input input_one;
+
+	raw_input input[10];
+
+	_dynamicScene dynamic_scene;
+
 	item items[max_item_count];//场景物件
 
 	team_colors team_color;//0：蓝方   1：红方
@@ -79,48 +129,10 @@ private:
 
 	timer_ my_timer;
 
-	/*menu_control m_control;*/
 };
 
-class menuScene
-{
-public:
-	menuScene();
-	~menuScene();
-	bool is_start();
-    
-	void render(int);
 
-	void wait();
-	//void choose(Client&);
-	bool m_start=0;//是否点击开始游戏按钮
-	int id;//玩家游戏编号
 
-	void getChoice();
-	
 
-	
 
-	
-private:
-
-};
-
-class choice
-{
-public:
-	int m_choice;
-	bool is_sure=0;
-};
-
-class friend_choice 
-{
-public:
-	int f_choice[5];//队友选择
-	bool f_is_sure[5];//队友是否确认选择
-	bool is_playing;//是否进入游戏
-};
-extern friend_choice f_ch;//队友信息
-extern choice myChoice;//选择的坦克，以及是否确认；
-extern m_client client;//客户端
 #endif // !_SCENE_H_

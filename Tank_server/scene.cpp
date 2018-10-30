@@ -1,25 +1,23 @@
-#include "timer.h"
-#define SHOW_CONSOLE
 #include <graphics.h>
-#include "scene.h"
+
+#include"item.h"
+#include"Server.h"
 #include "render.h"
 #include "input.h"
-#include"game.h"
-const my_render::images img = my_render::start;
+#include "timer.h"
+#include "scene.h"
+#include "game.h"
+
+
 
 /*
 author: suiyueliushang
 */
 gameScene::gameScene()
 {
-	dynamic_scene.tanks[blue][0].enable(position(), rotation(), tank::light);
-	dynamic_scene.tanks[blue][1].enable(position(0, -100), rotation(), tank::medium);
-	dynamic_scene.tanks[red][0].enable(position(100, 0), rotation(1), tank::heavy);
-	dynamic_scene.tanks[red][1].enable(position(100, 100), rotation(), tank::heavy);
-	my_tank = 0;
-	team_color = blue;
+	
 
-	items[0].enable(item::background, position(), rotation()); 
+	items[0].enable(item::background, position(), rotation());
 	items[1].enable(item::wall, position(-719, -757), rotation());
 	items[2].enable(item::wall, position(601, -619), rotation());
 	items[3].enable(item::wall, position(784, -619), rotation());
@@ -50,20 +48,156 @@ gameScene::gameScene()
 	items[28].enable(item::stone, position(-727, 564), rotation());
 	items[29].enable(item::stone, position(-123, 840), rotation());
 	items[30].enable(item::stone, position(-37, 889), rotation());
-}
 
+	for (int i = 0; i < 10; i++)
+		sure[i] = 0;
+
+	sureAll = 0;
+}
 
 gameScene::~gameScene()
 {
 }
-//
-//bool gameScene::recvInfo(Client &c)
-//{
-//
-//	bool m = c.receive(dynamic_scene);
-//
-//	return(m);
-//}
+
+void gameScene::Info()
+{	
+	int lists[10];//lists用于存储十个客户端的连接状态
+	while (1)
+	{
+		server.getConnections(lists);
+		for (int i = 0; i < 10; i++)//循环对十个客户端分别操作
+		{
+			if (lists[i] != 0)//判断当前客户端状态
+			{
+				message_info info = server.m_recv(i);//获取当前客户端message_info
+				switch ((char)(info.type))//通过当前客户端info中的type来区别信息传输
+				{
+				case 1://玩家进入游戏
+					if (info.isNew)//当该客户端信息为新时进入
+					{
+						server.getContent(i, &sure_one, sizeof(sure));//获取当前客户端的“确认”信息
+						sure[i] = sure_one;//将当前确认信息保存在数组中
+						server.m_send(i, 1, &i, sizeof(i));//向当前客户端传递“id”值
+						if (i == 9)//循环sure数组，判断十个客户端是否都进入游戏
+						{
+							for (int j = 0; j < 10; i++)
+							{
+								if (sure[i] == false)
+								{
+									break;
+								}
+								if (j == 9)
+								{
+									sureAll == true;
+								}
+							}
+						}
+					}
+					break;
+				case 3://玩家选择坦克
+					if (info.isNew)
+					{
+						choice_single choice_one;
+						server.getContent(i, &choice_one, sizeof(choice_one));//获取当前玩家选择坦克和锁定信息
+						if (i < 5)//当前玩家id小于5保存在蓝色方
+						{
+							m_choice_blue.blue_choice[i] = choice_one.choice;
+							m_choice_blue.blue_confirm[i] = choice_one.confirm;
+						}
+						else if (i >= 5)//当前玩家id大于5保存在红色方
+						{
+							m_choice_red.red_choice[i - 5] = choice_one.choice;
+							m_choice_red.red_confirm[i - 5] = choice_one.confirm;
+						}
+						for (int j = 0; j < 5; j++)//循环用于判断十个人是否确定
+						{
+							if (m_choice_blue.blue_confirm[j] == false || m_choice_red.red_confirm[j] == false)
+							{
+								break;
+							}
+							if (j == 4)
+							{
+								m_choice_blue.ready = true;
+								m_choice_red.ready = true;
+							}
+						}
+
+						/*if (m_choice_blue.blue_confirm[0] == 1)
+						{
+							m_choice_blue.ready = true;
+							m_choice_red.ready = true;
+						}
+					*/
+
+						//向所有客户端发送其自己和队友的选择和锁定信息
+						for (int j = 0; j < 10; j++)
+						{
+							if (j < 5)
+							{
+								server.m_send(j, 3, &m_choice_blue, sizeof(m_choice_blue));
+							}
+							else
+							{
+								server.m_send(j, 3, &m_choice_red, sizeof(m_choice_red));
+							}
+						}
+					}
+					break;
+				case 4:	//玩家战斗
+					static bool first = true;
+					if (first)
+					{
+						dynamic_scene.end = 0;
+						for (int i = 0; i < 5; i++)
+						{
+							first = false;
+							dynamic_scene.tanks[blue][i].enable(position(600 + 50 * i, -900), rotation(3.14), (tank::tank_type)(m_choice_blue.blue_choice[i] > 0 ? m_choice_blue.blue_choice[i] - 1 : 1));
+							dynamic_scene.tanks[red][i].enable(position(-900, 600 + 50 * i), rotation(4.71), (tank::tank_type)(m_choice_red.red_choice[i] > 0 ? m_choice_red.red_choice[i] - 1 : 1));
+						}
+					}
+					if (info.isNew)
+					{
+						int blue_lives = 0;
+						for (int i = 0; i < 5; i++)
+						{
+							if (!dynamic_scene.tanks[blue][i].isDead()) {
+								blue_lives++;
+							}
+						}
+						int red_lives = 0;
+						for (int i = 0; i < 5; i++)
+						{
+							if (!dynamic_scene.tanks[red][i].isDead()) {
+								red_lives++;
+							}
+						}
+						if (blue_lives == 0) {
+							dynamic_scene.end = -1;
+						}
+						else if (red_lives == 0)
+						{
+							dynamic_scene.end = 1;
+						}
+
+						server.m_send(i, 4, &dynamic_scene, sizeof(dynamic_scene));
+						server.getContent(i, &input_one, sizeof(input_one));//接收当前客户端的input信息
+						input[i] = input_one;//将当前input信息存储在input数组中
+						//if (i == 9)//通过input数组对当前信息进行update和collisionhandler
+						//{
+						this->update();
+						this->collisonhandler();
+						//for (int j = 0; j < 10; j++)//update和collisionhandler之后向十个客户端发送dynamic_sence
+						//{
+						//	server.m_send(j, 4, &dynamic_scene, sizeof(dynamic_scene));
+						//}
+					}
+					break;
+				}
+			}
+		}
+		delay_fps(60);
+	}
+}
 
 /*
 author: forcyan
@@ -75,32 +209,40 @@ void gameScene::update()
 		dt = 0.016;
 	my_timer.start();
 
-	//处理控件输入消息
-	static raw_input r_input;
-	r_input.get_raw();
-	leftbar.check(r_input, &dt);
-	rightbar.check(r_input, &dt);
-	topbar.check(r_input, &dt);
-	buttombar.check(r_input, &dt);
-	if (!map.check(r_input, nullptr));
-		//没有左键点击小地图
-		//作为坦克点击输入
-		//if (tank_input.check(r_input, &dynamic_scene.tanks[team_color][my_tank])) {
-		//	//遍历子弹池发射子弹
-		//	for (auto &i : dynamic_scene.bullets) {
-		//		if (!i.isEnable()) {
-		//			i.shot(dynamic_scene.tanks[team_color][my_tank].type(),
-		//				dynamic_scene.tanks[team_color][my_tank].getPosition(),
-		//				dynamic_scene.tanks[team_color][my_tank].getCannon());
-		//			break;
-		//		}
-		//	}
-		//}
+	//	//处理控件输入消息
+	//	static raw_input r_input;
+	//	r_input.get_raw();
+	//	leftbar.check(r_input, &dt);
+	//	rightbar.check(r_input, &dt);
+	//	topbar.check(r_input, &dt);
+	//	buttombar.check(r_input, &dt);
+	for (int i = 0; i < 10; i++)
+	{
+		int color = i / 5;
+		int team_id = i % 5;
+		auto&r_input = input[i];
+		if (!map.check(r_input, nullptr))
+			//没有左键点击小地图
+			//作为坦克点击输入
+			if (tank_input.check(r_input, &dynamic_scene.tanks[color][team_id])) {
+				//遍历子弹池发射子弹
+				for (auto &i : dynamic_scene.bullets) {
+					if (!i.isEnable()) {
+						i.shot(dynamic_scene.tanks[color][team_id].type(),
+							dynamic_scene.tanks[color][team_id].getPosition(),
+							dynamic_scene.tanks[color][team_id].getCannon());
+						break;
+					}
+				}
+			}
+	}
+	//
+	//
+		/*
+		场景更新
+		*/
+	int count = 0;
 
-
-	/*
-	场景更新
-	*/
 	for (auto& each : dynamic_scene.tanks[blue])
 	{
 		each.update(dt);
@@ -109,6 +251,8 @@ void gameScene::update()
 	{
 		each.update(dt);
 	}
+
+	count = 0;
 
 	for (auto& each : dynamic_scene.bullets)
 	{
@@ -287,170 +431,39 @@ void gameScene::visionhandler()
 
 }
 
-
-
-menuScene::menuScene()
-{
-}
-
-menuScene::~menuScene()
-{
-
-}
-
-bool menuScene::is_start()
-{
-	while (1)
-	{
-		render(0);
-		render(1);
-		raw_input m_raw_input;
-		m_raw_input.get_raw();
-		if (start.check(m_raw_input, NULL))
-		{
-			m_start = 1;
-			return true;
-			delay_fps(20);
-		}
-	}
-}
-
-void menuScene::render(int m_i)
-{
-	switch (m_i)
-	{
-	case 0:
-		main_render.rend_to_scene(my_render::main_game, 0, 0);
-		break;
-	case 1:
-		main_render.rend_to_scene(my_render::start, 0, 0);
-		break;
-	case 2:
-		main_render.rend_to_scene(my_render::wait, 0, 0);
-		break;
-	case 3:
-		main_render.rend_to_scene(my_render::choice, 0, 0);
-		break;
-	case 4:
-		/*raw_input input;
-		main_render.rend_to_scene(my_render::cover, 868, 97 + (id - 1) * 144);
-		if (choose1.check(input, NULL))
-			main_render.rend_to_scene(my_render::tank_1, 988, 97 + (id - 1) * 144);
-		else
-			if (choose2.check(input, NULL))
-				main_render.rend_to_scene(my_render::tank_2, 988, 97 + (id - 1) * 144);
-			else
-				if(choose3.check(input, NULL))
-					main_render.rend_to_scene(my_render::tank_3, 988, 97 + (id - 1) * 144);
-
-		if(confirm.check(input, NULL))
-			main_render.rend_to_scene(my_render::sure, 1019, 137 + (id - 1) * 144);*/
-	{
-		for (int i = 1; i <= 5; i++)
-		{
-
-			switch (f_ch.f_choice[i])
-			{
-			case 1:
-				main_render.rend_to_scene(my_render::tank_1, position(448, -236 + (i - 1) * 144),rotation());
-				break;
-			case 2:
-				main_render.rend_to_scene(my_render::tank_2, position(448, -236 + (i - 1) * 144), rotation());
-				break;
-			case 3:
-				main_render.rend_to_scene(my_render::tank_3, position(448, -236 + (i - 1) * 144), rotation());
-				break;
-			default:
-				break;
-			}
-
-			if (f_ch.f_is_sure[i])
-			{
-				main_render.rend_to_scene(my_render::sure, 479, -223 + (i - 1) * 144);
-			}
-		}
-
-	}
-	default:
-		break;
-	}
-	
-}
-
-
-void menuScene::wait()
-{
-	message_info m_info;
-	bool is_return = 0;//是个玩家是否都进行确认
-	while (1)
-	{
-		m_info = client.m_recv();
-		if (1 == m_info.isNew && 2 == m_info.type)
-		{
-			client.getContent(&is_return, 1);
-			if (1 == is_return)
-				return;
-		}
-	}
-}
-
-void menuScene::getChoice()
-{
-	raw_input m_input;
-	m_input.get_raw();
-	if (choose1.check(m_input, NULL))
-	      myChoice.m_choice = 1;
-	else
-		if (choose2.check(m_input, NULL))
-			myChoice.m_choice = 2;
-		else
-			if (choose3.check(m_input, NULL))
-				myChoice.m_choice = 2;
-	if (confirm.check(m_input, NULL))
-	{
-		myChoice.is_sure = 1;
-	}
-}
-
-//void menuScene::choose(Client &c)
+//menuScene::menuScene()
 //{
-//	raw_input input;
-//	while (1)
-//	{
-//		input.get_raw();
-//		if (choose1.check(input, NULL))
-//		{
-//			c.Send(1);
-//			c.receive();
-//			break;
-//		}
-//		else if (choose2.check(input, NULL))
-//		{
-//			c.Send(2);
-//			c.receive();
-//			break;
-//		}
-//		else if (choose3.check(input, NULL))
-//		{
-//			c.Send(3);
-//			c.receive();
-//			break;
-//		}
-//		else if (confirm.check(input, NULL))
-//		{
-//			c.Send(4);
-//			c.receive();
-//			break;
-//		}
-//	}
-//    
+//	
 //}
 //
-//bool menuScene::fight()
+//menuScene::~menuScene()
 //{
-//	return isFight;
+//
 //}
 
-friend_choice f_ch;//队友信息
-choice myChoice;//选择的坦克，以及是否确认；
-m_client client;//客户端
+choice_single::choice_single()
+{
+	confirm = 0;
+	choice = 0;
+	ready = 0;
+}
+
+choice_blue::choice_blue()
+{
+	for (int i = 0; i < 5; i++)
+	{
+		blue_choice[i] = 0;
+		blue_confirm[i] = 0;
+	}
+	ready = 0;
+}
+
+choice_red::choice_red()
+{
+	for (int i = 0; i < 5; i++)
+	{
+		red_choice[i] = 0;
+		red_confirm[i] = 0;
+	}
+	ready = 0;
+}

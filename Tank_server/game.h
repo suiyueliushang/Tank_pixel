@@ -1,8 +1,9 @@
 #ifndef _GAME_H_
 #define _GAME_H_
 
-#include"scene.h"
-#include"input.h"
+#include "scene.h"
+#include"Server.h"
+
 /*
 game.h
 游戏类
@@ -29,17 +30,11 @@ public:
 	控制帧率
 	*/
 	void game_cycle();
-	menuScene m_menuScene;
-	gameScene m_gameScene;
-private:
-	friend_choice f_ch;//队友信息
-	choice myChoice;//选择的坦克，以及是否确认；
-	m_client client;//客户端
 
-	bool retVal;
+private:
+
+	gameScene m_gameScene;
 };
 
 
 #endif // !_GAME_H_
-
-

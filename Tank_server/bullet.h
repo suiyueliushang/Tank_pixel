@@ -3,6 +3,8 @@
 
 #include "coordinate.h"
 #include "tank.h"
+#include "item.h"
+
 
 class bullet
 {
@@ -11,6 +13,8 @@ public:
 	~bullet();
 
 	//更新相关属性
+	//void update(float);
+
 	void update(float);
 
 	//渲染

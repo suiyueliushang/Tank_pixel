@@ -22,7 +22,7 @@
     <Filter Include="头文件\game">
       <UniqueIdentifier>{cd9d8985-22b0-4fcd-a79f-1e1d4e0f2446}</UniqueIdentifier>
     </Filter>
-    <Filter Include="头文件\client">
+    <Filter Include="头文件\server">
       <UniqueIdentifier>{523398e4-0d8d-4d24-af92-38dd3e50b2d5}</UniqueIdentifier>
     </Filter>
   </ItemGroup>
@@ -60,10 +60,10 @@
     <ClCompile Include="input.cpp">
       <Filter>源文件</Filter>
     </ClCompile>
-    <ClCompile Include="client.cpp">
-      <Filter>源文件</Filter>
+    <ClCompile Include="Server.h">
+      <Filter>头文件\server</Filter>
     </ClCompile>
-    <ClCompile Include="my_socket.cpp">
+    <ClCompile Include="Server.cpp">
       <Filter>源文件</Filter>
     </ClCompile>
   </ItemGroup>
@@ -100,12 +100,6 @@
     </ClInclude>
     <ClInclude Include="input.h">
       <Filter>头文件\engine</Filter>
-    </ClInclude>
-    <ClInclude Include="client.h">
-      <Filter>头文件\client</Filter>
-    </ClInclude>
-    <ClInclude Include="my_socket.h">
-      <Filter>头文件\client</Filter>
     </ClInclude>
   </ItemGroup>
 </Project>

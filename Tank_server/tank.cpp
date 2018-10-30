@@ -1,4 +1,5 @@
 #include "tank.h"
+#include"scene.h"
 #include "collision.h"
 #include "render.h"
 #include "timer.h"
@@ -114,6 +115,66 @@ void tank::update(float dt)
 	}
 
 	m_reload -= dt;
+}
+
+void tank::update(int id, float dt, raw_input input[])
+{
+	if (m_status != 1)return;
+	this->m_rotation += rotation(input[id].left_and_right * getProperty(rotate_speed) *dt);
+	if (input[id].up_and_down == 0)
+	{
+		//逐渐停下，加速度x2
+		if (m_now_speed > 0) {
+			m_now_speed -= 2 * getProperty(a_speed) * dt;
+			if (m_now_speed < 0)
+				m_now_speed = 0;
+		}
+
+		if (m_now_speed < 0) {
+			m_now_speed += 2 * getProperty(a_speed) * dt;
+			if (m_now_speed > 0)
+				m_now_speed = 0;
+		}
+	}
+	else
+	{
+		if (m_now_speed * input[id].up_and_down > 0)
+			//加速
+			m_now_speed += input[id].up_and_down * getProperty(a_speed) *dt;
+		else
+			//减速，加速度x2
+			m_now_speed += 2 * input[id].up_and_down * getProperty(a_speed) *dt;
+		if (m_now_speed > getProperty(max_speed))
+		{
+			m_now_speed = getProperty(max_speed);
+		}
+		if (m_now_speed < -getProperty(max_speed))
+		{
+			m_now_speed = -getProperty(max_speed);
+		}
+	}
+	m_position += position(m_now_speed * dt * -sin(m_rotation.r()), m_now_speed * dt * -cos(m_rotation.r()));
+
+	//旋转炮台
+	float pi = 3.14159265359;
+	rotation abs_rotation = atan2(m_position.x() - input[id].aim.x(), m_position.y() - input[id].aim.y());
+	rotation d_rotation = m_rotation + m_cannon_rotation - abs_rotation;
+	if (d_rotation.r() < pi)
+	{
+		if (d_rotation.r() > getProperty(cannon_speed) * dt)
+			d_rotation.r(getProperty(cannon_speed) * dt);
+		m_cannon_rotation -= d_rotation;
+	}
+	if (d_rotation.r() > pi)
+	{
+		d_rotation = -d_rotation;
+		if (d_rotation.r() > getProperty(cannon_speed) * dt)
+			d_rotation.r(getProperty(cannon_speed) * dt);
+		m_cannon_rotation += d_rotation;
+	}
+	m_reload -= dt;
+
+	
 }
 
 void tank::set_uad(int uad)

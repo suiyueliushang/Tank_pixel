@@ -88,9 +88,9 @@ struct POINT
 };
 struct LINESEG
 {
-	POINT s;
+	POINT server;
 	POINT e;
-	LINESEG(POINT a, POINT b) { s = a; e = b; }
+	LINESEG(POINT a, POINT b) { server = a; e = b; }
 	LINESEG() { }
 };
 struct LINE           // 直线的解析方程 a*x+b*y+c=0  为统一表示，约定 a >= 0 
@@ -150,7 +150,7 @@ double dotmultiply(POINT p1, POINT p2, POINT p0)
 *******************************************************************************/
 bool online(LINESEG l, POINT p)
 {
-	return((multiply(l.e, p, l.s) == 0) && (((p.x - l.s.x)*(p.x - l.e.x) <= 0) && ((p.y - l.s.y)*(p.y - l.e.y) <= 0)));
+	return((multiply(l.e, p, l.server) == 0) && (((p.x - l.server.x)*(p.x - l.e.x) <= 0) && ((p.y - l.server.y)*(p.y - l.e.y) <= 0)));
 }
 // 返回点p以点o为圆心逆时针旋转alpha(单位：弧度)后所在的位置 
 POINT rotate(POINT o, double alpha, POINT p)
@@ -174,11 +174,11 @@ r <= -1	angle = -PI
 -1<r<1 && r'>0	angle = arccos(r)
 -1<r<1 && r'<=0	angle = -arccos(r)
 */
-double angle(POINT o, POINT s, POINT e)
+double angle(POINT o, POINT server, POINT e)
 {
 	double cosfi, fi, norm;
-	double dsx = s.x - o.x;
-	double dsy = s.y - o.y;
+	double dsx = server.x - o.x;
+	double dsy = server.y - o.y;
 	double dex = e.x - o.x;
 	double dey = e.y - o.y;
 
@@ -217,17 +217,17 @@ r>1      P is on the forward extension of AB
 double relation(POINT p, LINESEG l)
 {
 	LINESEG tl;
-	tl.s = l.s;
+	tl.server = l.server;
 	tl.e = p;
-	return dotmultiply(tl.e, l.e, l.s) / (dist(l.s, l.e)*dist(l.s, l.e));
+	return dotmultiply(tl.e, l.e, l.server) / (dist(l.server, l.e)*dist(l.server, l.e));
 }
 // 求点C到线段AB所在直线的垂足 P 
 POINT perpendicular(POINT p, LINESEG l)
 {
 	double r = relation(p, l);
 	POINT tp;
-	tp.x = l.s.x + r * (l.e.x - l.s.x);
-	tp.y = l.s.y + r * (l.e.y - l.s.y);
+	tp.x = l.server.x + r * (l.e.x - l.server.x);
+	tp.y = l.server.y + r * (l.e.y - l.server.y);
 	return tp;
 }
 /* 求点p到线段l的最短距离,并返回线段上距该点最近的点np
@@ -237,8 +237,8 @@ double ptolinesegdist(POINT p, LINESEG l, POINT &np)
 	double r = relation(p, l);
 	if (r<0)
 	{
-		np = l.s;
-		return dist(p, l.s);
+		np = l.server;
+		return dist(p, l.server);
 	}
 	if (r>1)
 	{
@@ -251,7 +251,7 @@ double ptolinesegdist(POINT p, LINESEG l, POINT &np)
 // 求点p到线段l所在直线的距离,请注意本函数与上个函数的区别  
 double ptoldist(POINT p, LINESEG l)
 {
-	return abs(multiply(p, l.e, l.s)) / dist(l.s, l.e);
+	return abs(multiply(p, l.e, l.server)) / dist(l.server, l.e);
 }
 /* 计算点到折线集的最近距离,并返回最近点.
 注意：调用的是ptolineseg()函数 */
@@ -264,7 +264,7 @@ double ptopointset(int vcount, POINT pointset[], POINT p, POINT &q)
 
 	for (i = 0; i<vcount - 1; i++)
 	{
-		l.s = pointset[i];
+		l.server = pointset[i];
 
 		l.e = pointset[i + 1];
 		td = ptolinesegdist(p, l, tq);
@@ -293,19 +293,19 @@ bool CircleInsidePolygon(int vcount, POINT center, double radius, POINT polygon[
 /* 返回两个矢量l1和l2的夹角的余弦(-1 --- 1)注意：如果想从余弦求夹角的话，注意反余弦函数的定义域是从 0到pi */
 double cosine(LINESEG l1, LINESEG l2)
 {
-	return (((l1.e.x - l1.s.x)*(l2.e.x - l2.s.x) +
-		(l1.e.y - l1.s.y)*(l2.e.y - l2.s.y)) / (dist(l1.e, l1.s)*dist(l2.e, l2.s)));
+	return (((l1.e.x - l1.server.x)*(l2.e.x - l2.server.x) +
+		(l1.e.y - l1.server.y)*(l2.e.y - l2.server.y)) / (dist(l1.e, l1.server)*dist(l2.e, l2.server)));
 }
 // 返回线段l1与l2之间的夹角 单位：弧度 范围(-pi，pi) 
 double lsangle(LINESEG l1, LINESEG l2)
 {
-	POINT o, s, e;
+	POINT o, server, e;
 	o.x = o.y = 0;
-	s.x = l1.e.x - l1.s.x;
-	s.y = l1.e.y - l1.s.y;
-	e.x = l2.e.x - l2.s.x;
-	e.y = l2.e.y - l2.s.y;
-	return angle(o, s, e);
+	server.x = l1.e.x - l1.server.x;
+	server.y = l1.e.y - l1.server.y;
+	e.x = l2.e.x - l2.server.x;
+	e.y = l2.e.y - l2.server.y;
+	return angle(o, server, e);
 }
 // 如果线段u和v相交(包括相交在端点处)时，返回true 
 //
@@ -313,26 +313,26 @@ double lsangle(LINESEG l1, LINESEG l2)
 //判断Q1Q2跨立P1P2的依据是：( Q1 - P1 ) × ( P2 - P1 ) * ( P2 - P1 ) × ( Q2 - P1 ) >= 0。
 bool intersect(LINESEG u, LINESEG v)
 {
-	return((max(u.s.x, u.e.x) >= min(v.s.x, v.e.x)) &&                     //排斥实验 
-		(max(v.s.x, v.e.x) >= min(u.s.x, u.e.x)) &&
-		(max(u.s.y, u.e.y) >= min(v.s.y, v.e.y)) &&
-		(max(v.s.y, v.e.y) >= min(u.s.y, u.e.y)) &&
-		(multiply(v.s, u.e, u.s)*multiply(u.e, v.e, u.s) >= 0) &&         //跨立实验 
-		(multiply(u.s, v.e, v.s)*multiply(v.e, u.e, v.s) >= 0));
+	return((max(u.server.x, u.e.x) >= min(v.server.x, v.e.x)) &&                     //排斥实验 
+		(max(v.server.x, v.e.x) >= min(u.server.x, u.e.x)) &&
+		(max(u.server.y, u.e.y) >= min(v.server.y, v.e.y)) &&
+		(max(v.server.y, v.e.y) >= min(u.server.y, u.e.y)) &&
+		(multiply(v.server, u.e, u.server)*multiply(u.e, v.e, u.server) >= 0) &&         //跨立实验 
+		(multiply(u.server, v.e, v.server)*multiply(v.e, u.e, v.server) >= 0));
 }
 //  (线段u和v相交)&&(交点不是双方的端点) 时返回true    
 bool intersect_A(LINESEG u, LINESEG v)
 {
 	return	((intersect(u, v)) &&
-		(!online(u, v.s)) &&
+		(!online(u, v.server)) &&
 		(!online(u, v.e)) &&
 		(!online(v, u.e)) &&
-		(!online(v, u.s)));
+		(!online(v, u.server)));
 }
 // 线段v所在直线与线段u相交时返回true；方法：判断线段u是否跨立线段v  
 bool intersect_l(LINESEG u, LINESEG v)
 {
-	return multiply(u.s, v.e, v.s)*multiply(v.e, u.e, v.s) >= 0;
+	return multiply(u.server, v.e, v.server)*multiply(v.e, u.e, v.server) >= 0;
 }
 // 根据已知两点坐标，求过这两点的直线解析方程： a*x+b*y+c = 0  (a >= 0)  
 LINE makeline(POINT p1, POINT p2)
@@ -393,8 +393,8 @@ bool lineintersect(LINE l1, LINE l2, POINT &p) // 是 L1，L2
 bool intersection(LINESEG l1, LINESEG l2, POINT &inter)
 {
 	LINE ll1, ll2;
-	ll1 = makeline(l1.s, l1.e);
-	ll2 = makeline(l2.s, l2.e);
+	ll1 = makeline(l1.server, l1.e);
+	ll2 = makeline(l2.server, l2.e);
 	if (lineintersect(ll1, ll2, inter))
 		return online(l1, inter);
 	else
@@ -423,12 +423,12 @@ bool issimple(int vcount, POINT polygon[])
 	LINESEG l1, l2;
 	for (i = 0; i<vcount; i++)
 	{
-		l1.s = polygon[i];
+		l1.server = polygon[i];
 		l1.e = polygon[(i + 1) % vcount];
 		cn = vcount - 3;
 		while (cn)
 		{
-			l2.s = polygon[(i + 2) % vcount];
+			l2.server = polygon[(i + 2) % vcount];
 			l2.e = polygon[(i + 3) % vcount];
 			if (intersect(l1, l2))
 				break;
@@ -478,13 +478,13 @@ bool isconvex(int vcount, POINT polygon[])
 double area_of_polygon(int vcount, POINT polygon[])
 {
 	int i;
-	double s;
+	double server;
 	if (vcount<3)
 		return 0;
-	s = polygon[0].y*(polygon[vcount - 1].x - polygon[1].x);
+	server = polygon[0].y*(polygon[vcount - 1].x - polygon[1].x);
 	for (i = 1; i<vcount; i++)
-		s += polygon[i].y*(polygon[(i - 1)].x - polygon[(i + 1) % vcount].x);
-	return s / 2;
+		server += polygon[i].y*(polygon[(i - 1)].x - polygon[(i + 1) % vcount].x);
+	return server / 2;
 }
 // 如果输入顶点按逆时针排列，返回true 
 bool isconterclock(int vcount, POINT polygon[])
@@ -522,23 +522,23 @@ int insidepolygon(int vcount, POINT Polygon[], POINT q)
 	bool bintersect_a, bonline1, bonline2, bonline3;
 	double r1, r2;
 
-	l1.s = q;
+	l1.server = q;
 	l1.e = q;
 	l1.e.x = double(INF);
 	n = vcount;
 	for (i = 0; i<vcount; i++)
 	{
-		l2.s = Polygon[i];
+		l2.server = Polygon[i];
 		l2.e = Polygon[(i + 1) % n];
 		if (online(l2, q))
 			return 1; // 如果点在边上，返回1 
 		if ((bintersect_a = intersect_A(l1, l2)) || // 相交且不在端点 
 			((bonline1 = online(l1, Polygon[(i + 1) % n])) && // 第二个端点在射线上 
 			((!(bonline2 = online(l1, Polygon[(i + 2) % n]))) && /* 前一个端点和后一个端点在射线两侧 */
-				((r1 = multiply(Polygon[i], Polygon[(i + 1) % n], l1.s)*multiply(Polygon[(i + 1) % n], Polygon[(i + 2) % n], l1.s))>0) ||
+				((r1 = multiply(Polygon[i], Polygon[(i + 1) % n], l1.server)*multiply(Polygon[(i + 1) % n], Polygon[(i + 2) % n], l1.server))>0) ||
 				(bonline3 = online(l1, Polygon[(i + 2) % n])) &&     /* 下一条边是水平线，前一个端点和后一个端点在射线两侧  */
-				((r2 = multiply(Polygon[i], Polygon[(i + 2) % n], l1.s)*multiply(Polygon[(i + 2) % n],
-					Polygon[(i + 3) % n], l1.s))>0)
+				((r2 = multiply(Polygon[i], Polygon[(i + 2) % n], l1.server)*multiply(Polygon[(i + 2) % n],
+					Polygon[(i + 3) % n], l1.server))>0)
 				)
 				)
 			) c++;
@@ -565,8 +565,8 @@ bool InsideConvexPolygon(int vcount, POINT polygon[], POINT q) // 可用于三角形！
 
 	for (i = 0; i<vcount; i++)
 	{
-		l.s = polygon[i]; l.e = polygon[(i + 1) % vcount];
-		if (multiply(p, l.e, l.s)*multiply(q, l.e, l.s)<0) /* 点p和点q在边l的两侧，说明点q肯定在多边形外 */
+		l.server = polygon[i]; l.e = polygon[(i + 1) % vcount];
+		if (multiply(p, l.e, l.server)*multiply(q, l.e, l.server)<0) /* 点p和点q在边l的两侧，说明点q肯定在多边形外 */
 			break;
 	}
 	return (i == vcount);
@@ -639,9 +639,9 @@ void ConvexClosure(POINT PointSet[], POINT ch[], int n, int &len)
 	index = -1;
 	ch[top++] = tmp;
 	tmp.x -= 100;
-	l1.s = tmp;
+	l1.server = tmp;
 	l1.e = ch[0];
-	l2.s = ch[0];
+	l2.server = ch[0];
 
 	while (index != first)
 	{
@@ -653,19 +653,19 @@ void ConvexClosure(POINT PointSet[], POINT ch[], int n, int &len)
 			if (use[i])continue;
 			l2.e = PointSet[i];
 			curcos = cosine(l1, l2); // 根据cos值求夹角余弦，范围在 （-1 -- 1 ） 
-			if (curcos>curmax || fabs(curcos - curmax)<1e-6 && dist(l2.s, l2.e)>curdis)
+			if (curcos>curmax || fabs(curcos - curmax)<1e-6 && dist(l2.server, l2.e)>curdis)
 			{
 				curmax = curcos;
 				index = i;
-				curdis = dist(l2.s, l2.e);
+				curdis = dist(l2.server, l2.e);
 			}
 		}
 		use[first] = false;            //清空第first个顶点标志，使最后能形成封闭的hull 
 		use[index] = true;
 		ch[top++] = PointSet[index];
-		l1.s = ch[top - 2];
+		l1.server = ch[top - 2];
 		l1.e = ch[top - 1];
-		l2.s = ch[top - 1];
+		l2.server = ch[top - 1];
 	}
 	len = top - 1;
 }
@@ -679,29 +679,29 @@ void ConvexClosure(POINT PointSet[], POINT ch[], int n, int &len)
 bool LinesegInsidePolygon(int vcount, POINT polygon[], LINESEG l)
 {
 	// 判断线端l的端点是否不都在多边形内 
-	if (!insidepolygon(vcount, polygon, l.s) || !insidepolygon(vcount, polygon, l.e))
+	if (!insidepolygon(vcount, polygon, l.server) || !insidepolygon(vcount, polygon, l.e))
 		return false;
 	int top = 0, i, j;
 	POINT PointSet[MAXV], tmp;
-	LINESEG s;
+	LINESEG server;
 
 	for (i = 0; i<vcount; i++)
 	{
-		s.s = polygon[i];
-		s.e = polygon[(i + 1) % vcount];
-		if (online(s, l.s)) //线段l的起始端点在线段s上 
-			PointSet[top++] = l.s;
-		else if (online(s, l.e)) //线段l的终止端点在线段s上 
+		server.server = polygon[i];
+		server.e = polygon[(i + 1) % vcount];
+		if (online(server, l.server)) //线段l的起始端点在线段s上 
+			PointSet[top++] = l.server;
+		else if (online(server, l.e)) //线段l的终止端点在线段s上 
 			PointSet[top++] = l.e;
 		else
 		{
-			if (online(l, s.s)) //线段s的起始端点在线段l上 
-				PointSet[top++] = s.s;
-			else if (online(l, s.e)) // 线段s的终止端点在线段l上 
-				PointSet[top++] = s.e;
+			if (online(l, server.server)) //线段s的起始端点在线段l上 
+				PointSet[top++] = server.server;
+			else if (online(l, server.e)) // 线段s的终止端点在线段l上 
+				PointSet[top++] = server.e;
 			else
 			{
-				if (intersect(l, s)) // 这个时候如果相交，肯定是内交，返回false 
+				if (intersect(l, server)) // 这个时候如果相交，肯定是内交，返回false 
 					return false;
 			}
 		}
@@ -797,22 +797,22 @@ POINT cg_simple(int vcount, POINT polygon[])
 POINT gravitycenter(int vcount, POINT polygon[])
 {
 	POINT tp;
-	double x, y, s, x0, y0, cs, k;
-	x = 0; y = 0; s = 0;
+	double x, y, server, x0, y0, cs, k;
+	x = 0; y = 0; server = 0;
 	for (int i = 1; i<vcount - 1; i++)
 	{
 		x0 = (polygon[0].x + polygon[i].x + polygon[i + 1].x) / 3;
 		y0 = (polygon[0].y + polygon[i].y + polygon[i + 1].y) / 3; //求当前三角形的重心 
 		cs = multiply(polygon[i], polygon[i + 1], polygon[0]) / 2;
 		//三角形面积可以直接利用该公式求解 
-		if (abs(s)<1e-20)
+		if (abs(server)<1e-20)
 		{
-			x = x0; y = y0; s += cs; continue;
+			x = x0; y = y0; server += cs; continue;
 		}
-		k = cs / s; //求面积比例 
+		k = cs / server; //求面积比例 
 		x = (x + k * x0) / (1 + k);
 		y = (y + k * y0) / (1 + k);
-		s += cs;
+		server += cs;
 	}
 	tp.x = x;
 	tp.y = y;
@@ -885,12 +885,12 @@ void pointtangentpoly(int vcount, POINT polygon[], POINT p, POINT &rp, POINT &lp
 	lp = polygon[0];
 	for (int i = 1; i<vcount; i++)
 	{
-		ep.s = polygon[(i + vcount - 1) % vcount];
+		ep.server = polygon[(i + vcount - 1) % vcount];
 		ep.e = polygon[i];
-		en.s = polygon[i];
+		en.server = polygon[i];
 		en.e = polygon[(i + 1) % vcount];
-		blp = multiply(ep.e, p, ep.s) >= 0;                // p is to the left of pre edge 
-		bln = multiply(en.e, p, en.s) >= 0;                // p is to the left of next edge 
+		blp = multiply(ep.e, p, ep.server) >= 0;                // p is to the left of pre edge 
+		bln = multiply(en.e, p, en.server) >= 0;                // p is to the left of next edge 
 		if (!blp&&bln)
 		{
 			if (multiply(polygon[i], rp, p)>0)           // polygon[i] is above rp 
@@ -923,9 +923,9 @@ bool core_exist(int vcount, POINT polygon[], POINT &p)
 			{
 				for (k = 0; k<vcount; k++)
 				{
-					l.s = polygon[k];
+					l.server = polygon[k];
 					l.e = polygon[(k + 1) % vcount];
-					if (multiply(p, l.e, l.s)>0)
+					if (multiply(p, l.e, l.server)>0)
 						//多边形顶点按逆时针方向排列，核肯定在每条边的左侧或边上 
 						break;
 				}
@@ -1271,13 +1271,13 @@ double c2area(POINT p1, double r1, POINT p2, double r2)
 	dx2 = rp2.x - p2.x;
 	dy2 = rp2.y - p2.y;
 	sita2 = acos((dx1*dx2 + dy1 * dy2) / r2 / r2);
-	double s = 0;
+	double server = 0;
 	if (rr<r2)//相交弧为优弧 
-		s = r1 * r1*(PI - sita1 / 2 + sin(sita1) / 2) + r2 * r2*(sita2 - sin(sita2)) / 2;
+		server = r1 * r1*(PI - sita1 / 2 + sin(sita1) / 2) + r2 * r2*(sita2 - sin(sita2)) / 2;
 	else//相交弧为劣弧 
-		s = (r1*r1*(sita1 - sin(sita1)) + r2 * r2*(sita2 - sin(sita2))) / 2;
+		server = (r1*r1*(sita1 - sin(sita1)) + r2 * r2*(sita2 - sin(sita2))) / 2;
 
-	return s;
+	return server;
 }
 //圆和直线关系： 
 //0----相离 1----相切 2----相交 
@@ -1406,10 +1406,10 @@ void cutpoint(POINT p, double r, POINT sp, POINT &rp1, POINT &rp2)
 int rotat(LINESEG l1, LINESEG l2)
 {
 	double dx1, dx2, dy1, dy2;
-	dx1 = l1.s.x - l1.e.x;
-	dy1 = l1.s.y - l1.e.y;
-	dx2 = l2.s.x - l2.e.x;
-	dy2 = l2.s.y - l2.e.y;
+	dx1 = l1.server.x - l1.e.x;
+	dy1 = l1.server.y - l1.e.y;
+	dx2 = l2.server.x - l2.e.x;
+	dy2 = l2.server.y - l2.e.y;
 
 	double d;
 	d = dx1 * dy2 - dx2 * dy1;

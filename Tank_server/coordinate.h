@@ -1,6 +1,8 @@
 #ifndef _COORDINATE_H_
 #define _COORDINATE_H_
 
+#define SHOW_CONSOLE
+
 /*
 зјБъ
 

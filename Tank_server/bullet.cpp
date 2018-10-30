@@ -3,6 +3,7 @@
 #include "collision.h"
 #include "render.h"
 #include "timer.h"
+#include"scene.h"
 
 bullet::bullet()
 {
@@ -11,6 +12,7 @@ bullet::bullet()
 
 bullet::~bullet()
 {
+
 }
 
 /*
@@ -18,7 +20,7 @@ author: forcyan
 */
 void bullet::update(float dt)
 {
-	if (!enabled) return;
+	if (!enabled)return;
 	m_lastFram = m_position;
 	//子弹飞行，位置改变
 	m_position += position(m_speed *dt * -sin(m_rotation.r()), m_speed*dt*-cos(m_rotation.r()));
@@ -27,7 +29,6 @@ void bullet::update(float dt)
 	//判断生存期
 	if ((my_clock() - m_time_start) > getProperty(time_to_live))
 		enabled = false;
-
 }
 
 /*

@@ -1,5 +1,4 @@
 #include "input.h"
-#define SHOW_CONSOLE
 #include <graphics.h>
 #include "render.h"
 
@@ -69,11 +68,7 @@ void raw_input::get_raw()
 	aim = position(mouse_x, mouse_y) + main_render.camera_position - position(540, 360);
 }
 
-		menu_control::menu_control()
-		{
-		}
-
-		menu_control::menu_control(position lt, position rb, check_func f)
+menu_control::menu_control(position lt, position rb, check_func f)
 {
 	left_top = lt;
 	right_buttom = rb;
@@ -100,7 +95,8 @@ author: forcyan
 */
 bool tank_input_func(raw_input&r, void*p) {
 	tank*tp = (tank*)p;
-	if (r.left_is_down)tp->set_aim(r.aim);
+	if (r.left_is_down)
+		tp->set_aim(r.aim);
 	tp->set_lar(r.left_and_right);
 	tp->set_uad(r.up_and_down);
 	if (r.right_is_down)
@@ -185,7 +181,8 @@ menu_control buttombar(position(100, 620), position(1080, 720), buttombar_func);
 author: K024
 */
 bool map_func(raw_input& r, void*p) {
-	if (!r.left_is_down)return false;
+	//if (!r.left_is_down)
+		return false;
 	main_render.camera_position = position((r.mouse_x - 100) * 10, (r.mouse_y - 620) * 10);
 	return true;
 }
@@ -202,7 +199,7 @@ bool start_func(raw_input& r, void*p) {
 	return false;
 }
 
-menu_control start(position(351, 359), position(729,473), start_func);
+menu_control start(position(400, 260), position(680, 460), start_func);
 
 
 bool choose_func(raw_input& r,void*)
@@ -214,9 +211,9 @@ bool choose_func(raw_input& r,void*)
 	return false;
 }
 
-menu_control choose1(position(100, 417), position(202, 545), choose_func);
-menu_control choose2(position(347, 395), position(454, 543), choose_func);
-menu_control choose3(position(571, 324), position(722, 545), choose_func);
+menu_control choose1(position(100, 100), position(150, 150), choose_func);
+menu_control choose2(position(200, 200), position(250, 250), choose_func);
+menu_control choose3(position(300, 300), position(350, 350), choose_func);
 
 bool confirm_func(raw_input& r, void*)
 {
@@ -226,4 +223,5 @@ bool confirm_func(raw_input& r, void*)
 	}
 	return false;
 }
-menu_control confirm(position(324, 639), position(503, 706), confirm_func);
+
+menu_control confirm(position(500, 500), position(600, 600), confirm_func);

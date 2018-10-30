@@ -21,18 +21,7 @@ namespace my_render {
 		wood,
 		stone,
 		wall,
-		main_game,
-		start,
-		wait,
-		choice,
-		confirm,
-		sure,
-		tank_1,
-		tank_2,
-		tank_3,
-		cover,
-		victory,
-		defeat
+		start
 	};
 
 	class render {

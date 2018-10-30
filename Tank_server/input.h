@@ -2,6 +2,7 @@
 #define _INPUT_H_
 
 #include "coordinate.h"
+
 //原始输入，用于传输
 class raw_input {
 public:
@@ -14,6 +15,7 @@ public:
 
 	//鼠标左右键是否按下
 	bool left_is_down=0;
+
 	bool right_is_down=0;
 
 	//键盘方向键是否按下
@@ -30,7 +32,7 @@ typedef bool(*check_func)(raw_input&,void*);
 //输入控件（不渲染）
 class menu_control {
 public:
-	menu_control();
+
 	/*
 	构造函数
 	提供左上角点和右下角点和一个处理函数
@@ -106,7 +108,5 @@ extern menu_control choose3;
 /*
 选择坦克确定控件
 */
-extern menu_control confirm;
-
-
+extern menu_control choice_character[3];
 #endif // !_INPUT_H_

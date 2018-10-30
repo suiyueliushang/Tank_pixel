@@ -1,6 +1,5 @@
-
 #include "game.h"
-
+#define SHOW_CONSOLE
 
 
 int main() 
